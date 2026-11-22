@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>设备缩略图生成（内部预览，不进入站点路由）</title>
+  </head>
+  <body>
+    <p id="status">rendering…</p>
+    <script type="module">
+      import { DEVICES } from '../../src/data/devices.ts';
+      import { renderThumbnails } from '../../src/engine/SceneManager.ts';
+      try {
+        window.__thumbs = renderThumbnails(DEVICES);
+        window.__thumbStatus = 'done';
+        document.getElementById('status').textContent = 'done: ' + Object.keys(window.__thumbs).length;
+      } catch (err) {
+        window.__thumbError = String((err && err.stack) || err);
+        window.__thumbStatus = 'error';
+        document.getElementById('status').textContent = 'error: ' + window.__thumbError;
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,102 @@
+import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { chromium } from 'playwright-core';
+import { browserOptions, webglArgs } from './browser-options.mjs';
+
+const base = process.env.VERIFY_BASE ?? 'http://127.0.0.1:48118/';
+const output = 'outputs/verify-p4';
+mkdirSync(output, { recursive: true });
+const browser = await chromium.launch({ ...browserOptions, headless: true, args: webglArgs });
+try {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const errors = [];
+  page.on('pageerror', error => errors.push(String(error)));
+  const batch = () => page.evaluate(() => window.__factoryDebug.coatingBatch());
+  const action = key => page.locator('[data-coating-action="' + key + '"]').click();
+  const message = () => page.locator('.fi-batch-message').textContent();
+  const jump = async uid => {
+    const searchTab = page.locator('.factory-tab', { hasText: '搜索' });
+    if (!(await searchTab.isVisible())) await page.locator('[aria-controls="factory-directory"]').click();
+    await searchTab.click();
+    await page.getByPlaceholder('搜索设备位号 / 名称 / 管线编号…').fill(uid);
+    await page.locator('.factory-search-item .r-tag').getByText(uid, { exact: true }).click();
+    await page.locator('.fi-head .fi-tag').getByText(uid, { exact: true }).waitFor();
+  };
+
+  await page.goto(base + '#/node/R-202');
+  await page.locator('.fi-batch').waitFor();
+  await action('release');
+  assert.match(await message(), /先取样/);
+  assert.equal((await batch()).release, 'awaiting-sample');
+  await action('sample');
+  assert.equal((await batch()).release, 'sampled');
+  await action('hold');
+  assert.equal((await batch()).blend, 1);
+  assert.equal((await batch()).release, 'held');
+  await page.screenshot({ path: output + '/coating-held.png' });
+  await action('quarantine');
+  assert.equal((await batch()).quarantined, 1);
+  assert.equal((await batch()).staged, 0);
+
+  await jump('T-201');
+  await action('reset');
+  await jump('R-202');
+  await action('sample');
+  await action('release');
+  await jump('C-201');
+  const command = page.locator('.factory-equipment-command');
+  await command.click();
+  await jump('R-202');
+  await action('advance');
+  assert.equal((await batch()).filter, 0);
+  assert.equal((await batch()).blend, 1);
+
+  await jump('C-201');
+  await command.click();
+  await jump('R-202');
+  await action('advance');
+  assert.equal((await batch()).filter, 1);
+  await action('advance');
+  assert.equal((await batch()).packed, 1);
+  assert.equal((await batch()).staged, 0);
+  const conveyor = page.locator('.fd-edge[data-pipe="PL-210"]');
+  assert.equal(await conveyor.getAttribute('data-flow'), 'full');
+  await action('advance');
+  assert.equal((await batch()).raw, 0);
+  assert.equal((await batch()).staged, 1);
+  assert.equal(await conveyor.getAttribute('data-flow'), 'off');
+
+  await jump('CL-201');
+  await page.locator('select[data-coating-select="状态"]').selectOption('rinse');
+  await action('advance');
+  assert.equal((await batch()).collected, 1);
+  assert.equal((await batch()).rinse, 0);
+  await action('advance');
+  assert.match(await message(), /用完/);
+  const rinseResult = await batch();
+  await jump('T-201');
+  await action('start-raw');
+  assert.equal((await batch()).blend, 0);
+  for (let round = 0; round < 5; round++) await action('advance');
+  const intake = await batch();
+  assert.deepEqual([intake.raw, intake.premix, intake.blend], [0, 0, 4]);
+  await jump('R-202');
+  await action('sample');
+  await action('release');
+  for (let round = 0; round < 5; round++) await action('advance');
+  const completed = await batch();
+  assert.deepEqual([completed.blend, completed.filter, completed.packed, completed.staged, completed.samples], [0, 0, 0, 3, 1]);
+  await jump('P-201');
+  const pump = page.locator('.fi-actions a[href="#/device/pump"]');
+  await pump.click();
+  await page.locator('.workbench canvas').waitFor();
+  await page.locator('.back-btn').click();
+  await pump.waitFor();
+  assert.deepEqual(await batch(), completed);
+  assert.equal(await conveyor.getAttribute('data-flow'), 'off');
+  assert.deepEqual(errors, []);
+  writeFileSync(output + '/coating-browser.json', JSON.stringify({ rinseResult, intake, completed }, null, 2));
+  console.log('PASS: sample required, hold retains blend, separate air drive, staged packing, finite feed and separate wash collection');
+} finally {
+  await browser.close();
+}

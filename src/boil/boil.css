@@ -1,0 +1,725 @@
+/* 首页微沸喷烧入口（与工坊/全流程入口并列，暖色区分） */
+.boil-banner {
+  background: linear-gradient(120deg, #251806 0%, #4a2f10 55%, #7a4d18 100%);
+  box-shadow: 0 8px 24px rgba(74, 47, 16, 0.28);
+}
+
+/* ============ 微沸喷烧页面 ============ */
+.boil-page {
+  position: fixed;
+  inset: 0;
+  background: #0b131b;
+  color: #dbe7f3;
+  overflow: hidden;
+  z-index: 1;
+  font-size: 14px;
+}
+
+.boil-stage { position: absolute; inset: 0; }
+
+.boil-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  cursor: grab;
+}
+.boil-canvas:active { cursor: grabbing; }
+
+/* ---------- 顶栏 ---------- */
+.boil-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px 16px;
+  background: linear-gradient(rgba(4, 12, 20, 0.96), rgba(4, 12, 20, 0.6) 68%, transparent);
+  z-index: 12;
+}
+
+.boil-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.boil-title h1 {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.boil-teach {
+  font-size: 11px;
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  background: rgba(251, 191, 36, 0.1);
+  border-radius: 999px;
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+.boil-sub {
+  font-size: 11px;
+  color: #8fa6bc;
+  white-space: nowrap;
+}
+
+.boil-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.boil-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #dbe7f3;
+  background: rgba(12, 25, 40, 0.72);
+  border: 1px solid rgba(148, 197, 255, 0.28);
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.16s, border-color 0.16s, transform 0.16s;
+}
+.boil-btn:hover { background: rgba(56, 189, 248, 0.16); border-color: rgba(56, 189, 248, 0.55); }
+.boil-btn:active { transform: translateY(1px); }
+.boil-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.boil-btn-ghost { background: rgba(12, 25, 40, 0.55); }
+.boil-btn.active {
+  color: #e8f7ff;
+  border-color: rgba(56, 189, 248, 0.8);
+  background: rgba(56, 189, 248, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.18);
+}
+
+/* ---------- 区域标签条 ---------- */
+.boil-area-tabs {
+  position: absolute;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: calc(100vw - 28px);
+  padding: 5px 7px;
+  background: rgba(7, 16, 26, 0.86);
+  border: 1px solid rgba(120, 160, 200, 0.28);
+  border-radius: 10px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(6px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.boil-area-tabs::-webkit-scrollbar { display: none; }
+.boil-area-tab {
+  padding: 5px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #a9bccd;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.boil-area-tab:hover { color: #e6f4ff; background: rgba(56, 189, 248, 0.1); }
+.boil-area-tab.active {
+  color: #eaf8ff;
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.65);
+}
+
+/* ---------- 左侧流程树面板 ---------- */
+.boil-panel {
+  position: absolute;
+  left: 14px;
+  top: 104px;
+  bottom: 14px;
+  width: 352px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  padding: 13px;
+  background: rgba(8, 16, 25, 0.92);
+  border: 1px solid rgba(120, 160, 200, 0.28);
+  border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+  overflow: auto;
+  z-index: 10;
+}
+.boil-page.panel-open .boil-panel { display: flex; }
+
+.boil-panel-head,
+.boil-detail-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.boil-panel-heading,
+.boil-detail-heading { flex: 1; min-width: 0; }
+.boil-panel-heading h2,
+.boil-detail-heading h2 { margin: 0 0 2px; font-size: 15px; }
+.boil-panel-heading span,
+.boil-detail-heading span { font-size: 11.5px; color: #8fa6bc; }
+.boil-panel-close,
+.boil-detail-close {
+  display: none;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1;
+  color: #b9c9da;
+  background: rgba(148, 197, 255, 0.1);
+  border: 1px solid rgba(148, 197, 255, 0.25);
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.boil-note {
+  margin: 0;
+  padding: 7px 9px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: #e0b86a;
+  background: rgba(224, 184, 106, 0.08);
+  border: 1px solid rgba(224, 184, 106, 0.25);
+  border-radius: 7px;
+}
+
+/* ---------- 流程树 ---------- */
+.boil-tree { display: flex; flex-direction: column; gap: 3px; }
+.boil-tree-root {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0 4px;
+  border-bottom: 1px solid rgba(120, 160, 200, 0.16);
+}
+.boil-tree-root-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  padding: 4px 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #eaf4ff;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+.boil-tree-root-label:hover { background: rgba(56, 189, 248, 0.1); }
+.boil-tree-root-label small { margin-left: auto; color: #8fa6bc; font-size: 10.5px; font-weight: 500; }
+.boil-tree-caret {
+  width: 20px;
+  height: 22px;
+  padding: 0;
+  color: #8fa6bc;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+.boil-tree-caret:hover { color: #e6f4ff; background: rgba(56, 189, 248, 0.12); }
+.boil-tree-branches { display: flex; flex-direction: column; gap: 2px; }
+.boil-tree-branches.collapsed,
+.boil-tree-children.collapsed { display: none; }
+.boil-tree-area { border-radius: 7px; }
+.boil-tree-area.active { background: rgba(56, 189, 248, 0.08); }
+.boil-tree-area.focused { background: rgba(56, 189, 248, 0.13); }
+.boil-tree-row { display: flex; align-items: center; gap: 2px; }
+.boil-tree-area-label {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 7px;
+  flex: 1;
+  padding: 5px 6px;
+  color: #dbe7f3;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+.boil-tree-area-label:hover { background: rgba(56, 189, 248, 0.1); }
+.boil-tree-area-label small {
+  grid-column: 2;
+  font-size: 10.5px;
+  color: #8fa6bc;
+  font-weight: 500;
+}
+.boil-tree-no {
+  grid-row: 1 / 3;
+  align-self: center;
+  min-width: 22px;
+  padding: 2px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #9fd8ff;
+  text-align: center;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 5px;
+}
+.boil-tree-children {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0 0 3px 12px;
+  padding-left: 7px;
+  border-left: 1px dashed rgba(120, 160, 200, 0.24);
+}
+.boil-tree-equipment {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  padding: 4px 7px;
+  font-size: 12px;
+  color: #c4d5e5;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: left;
+}
+.boil-tree-equipment:hover { color: #eef8ff; background: rgba(56, 189, 248, 0.1); }
+.boil-tree-equipment.active {
+  color: #eef8ff;
+  background: rgba(56, 189, 248, 0.2);
+  box-shadow: inset 2px 0 0 #38bdf8;
+}
+.boil-tree-equipment.in-area { color: #e6f4ff; }
+.boil-tree-dot {
+  margin-left: auto;
+  padding: 1px 5px;
+  font-size: 9.5px;
+  font-style: normal;
+  color: #f0a6c0;
+  background: rgba(216, 115, 154, 0.1);
+  border: 1px solid rgba(216, 115, 154, 0.3);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.boil-tree-branch {
+  margin: 1px 0 3px 18px;
+  padding-left: 8px;
+  border-left: 1px dashed rgba(216, 115, 154, 0.35);
+}
+.boil-tree-branch-note {
+  margin: 2px 0 2px;
+  font-size: 10px;
+  color: #d9a0b8;
+}
+.boil-tree-child { font-size: 11.5px; }
+
+/* ---------- 管线列表 ---------- */
+.boil-pipe-section {
+  padding-top: 7px;
+  border-top: 1px solid rgba(120, 160, 200, 0.16);
+}
+.boil-pipe-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #dfeaf5;
+  cursor: pointer;
+  list-style: none;
+}
+.boil-pipe-summary::-webkit-details-marker { display: none; }
+.boil-pipe-summary::before { content: '▸'; margin-right: 5px; color: #8fa6bc; }
+.boil-pipe-section[open] .boil-pipe-summary::before { content: '▾'; }
+.boil-pipe-summary-count { color: #8fa6bc; font-size: 11px; font-weight: 500; }
+.boil-pipe-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 4px;
+}
+.boil-pipe-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 9px;
+  color: #dbe7f3;
+  background: rgba(14, 25, 38, 0.75);
+  border: 1px solid rgba(120, 160, 200, 0.2);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.14s, border-color 0.14s;
+}
+.boil-pipe-item:hover { border-color: rgba(56, 189, 248, 0.5); background: rgba(20, 36, 52, 0.9); }
+.boil-pipe-item.active {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.25);
+}
+.boil-pipe-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.boil-pipe-id { font-size: 11.5px; color: #cfe1f3; }
+.boil-pipe-medium { font-size: 11px; color: #9fb1c4; }
+.boil-pipe-meta { margin-top: 2px; font-size: 10.5px; color: #8fa6bc; }
+
+.boil-pending {
+  padding-top: 8px;
+  border-top: 1px solid rgba(120, 160, 200, 0.16);
+}
+.boil-pending h3 { margin: 0 0 3px; font-size: 12.5px; color: #dfeaf5; }
+.boil-pending p { margin: 0 0 3px; font-size: 11px; line-height: 1.55; color: #9fb1c4; }
+.boil-pending .boil-pending-stat { color: #f0a6c0; }
+
+.boil-footnote {
+  margin: 0;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: #8fa6bc;
+}
+
+.boil-error {
+  padding: 7px 9px;
+  font-size: 11.5px;
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 7px;
+}
+
+/* ---------- 右侧信息面板 ---------- */
+.boil-detail {
+  position: absolute;
+  right: 14px;
+  top: 104px;
+  bottom: 14px;
+  width: 392px;
+  display: none;
+  flex-direction: column;
+  background: rgba(8, 16, 25, 0.93);
+  border: 1px solid rgba(120, 160, 200, 0.28);
+  border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+  z-index: 10;
+}
+.boil-page.detail-open .boil-detail { display: flex; }
+.boil-detail-head {
+  padding: 13px 13px 9px;
+  border-bottom: 1px solid rgba(120, 160, 200, 0.16);
+}
+.boil-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 11px 13px 15px;
+  overflow: auto;
+}
+.boil-detail-intro h3 { margin: 0 0 4px; font-size: 15px; }
+.boil-detail-intro p { margin: 0; font-size: 11.5px; line-height: 1.65; color: #9fb1c4; }
+.boil-badge-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px; }
+.boil-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.boil-badge.demo { color: #9fd8ff; background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.28); }
+.boil-badge.pending { color: #f0a6c0; background: rgba(216, 115, 154, 0.1); border-color: rgba(216, 115, 154, 0.32); }
+.boil-badge.neutral { color: #b9c9da; background: rgba(148, 197, 255, 0.08); border-color: rgba(148, 197, 255, 0.2); }
+.boil-badge.link {
+  cursor: pointer;
+  color: #8fd0ff;
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+.boil-detail-section {
+  padding-top: 9px;
+  border-top: 1px solid rgba(120, 160, 200, 0.14);
+}
+.boil-detail-section > h3 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #dfeaf5;
+  letter-spacing: 0.02em;
+}
+.boil-meta-row {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 7px;
+  padding: 3px 0;
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+.boil-meta-label { color: #8fa6bc; }
+.boil-meta-value { color: #c6d7e7; }
+.boil-chip-row { display: flex; flex-wrap: wrap; gap: 5px; margin: 2px 0; }
+.boil-chip {
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #bcd3e6;
+  background: rgba(14, 25, 38, 0.8);
+  border: 1px solid rgba(120, 160, 200, 0.24);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.boil-chip:hover { color: #eef8ff; border-color: rgba(56, 189, 248, 0.55); }
+.boil-chip.active { color: #eef8ff; background: rgba(56, 189, 248, 0.16); border-color: rgba(56, 189, 248, 0.7); }
+.boil-link-list { display: flex; flex-direction: column; gap: 3px; }
+.boil-link-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11.5px;
+}
+.boil-link {
+  padding: 0;
+  font-size: 11.5px;
+  color: #7dd3fc;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.boil-link:hover { color: #e0f6ff; text-decoration: underline; }
+.boil-link-block {
+  display: block;
+  width: 100%;
+  padding: 5px 7px;
+  margin-bottom: 2px;
+  color: #c6e6ff;
+  background: rgba(14, 25, 38, 0.65);
+  border: 1px solid rgba(120, 160, 200, 0.18);
+  border-radius: 6px;
+}
+.boil-link-block:hover { border-color: rgba(56, 189, 248, 0.5); text-decoration: none; }
+.boil-link-meta { color: #8fa6bc; font-size: 10.5px; }
+.boil-parent-tag { color: #d9a0b8; font-size: 10.5px; }
+.boil-subhead { margin: 5px 0 2px; font-size: 10.5px; color: #8fa6bc; }
+.boil-port-list { display: flex; flex-direction: column; gap: 3px; }
+.boil-port-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 3px 0;
+  font-size: 11px;
+  border-bottom: 1px dashed rgba(120, 160, 200, 0.12);
+}
+.boil-port-name { color: #c6d7e7; }
+.boil-port-role { color: #8fa6bc; font-size: 10px; }
+.boil-port-state {
+  padding: 0 5px;
+  font-size: 9.5px;
+  border-radius: 999px;
+}
+.boil-port-state.linked { color: #9fe6c5; background: rgba(52, 211, 153, 0.1); }
+.boil-port-state.boundary { color: #c3ccd6; background: rgba(154, 166, 178, 0.14); }
+.boil-port-state.pending { color: #f0a6c0; background: rgba(216, 115, 154, 0.12); }
+.boil-port-media { color: #8fa6bc; font-size: 10px; }
+.boil-empty { margin: 0; font-size: 11px; color: #8fa6bc; }
+.boil-detail-note {
+  margin: 5px 0 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #8fa6bc;
+}
+.boil-detail-pending {
+  padding: 8px 9px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #e8c47b;
+  background: rgba(224, 184, 106, 0.08);
+  border: 1px solid rgba(224, 184, 106, 0.25);
+  border-radius: 7px;
+}
+.boil-detail-pending strong { display: block; margin-bottom: 2px; color: #f3d79b; }
+.boil-detail-pending p { margin: 0; }
+
+/* ---------- 图例与统计 ---------- */
+.boil-legend {
+  position: absolute;
+  left: 380px;
+  right: 420px;
+  bottom: 14px;
+  z-index: 9;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 8px 11px;
+  font-size: 11px;
+  color: #b9c9da;
+  background: rgba(8, 16, 25, 0.86);
+  border: 1px solid rgba(120, 160, 200, 0.28);
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+}
+.boil-legend-title { font-weight: 600; color: #dfeaf5; }
+.boil-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.boil-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.boil-dot-boundary { background: #9aa6b2; }
+.boil-dot-pending { background: #d8739a; }
+.boil-stats {
+  width: 100%;
+  padding-top: 5px;
+  font-size: 10.5px;
+  color: #8fa6bc;
+  border-top: 1px solid rgba(120, 160, 200, 0.16);
+}
+
+.boil-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 72px;
+  z-index: 8;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  font-size: 11.5px;
+  color: #9fb1c4;
+  background: rgba(8, 16, 25, 0.8);
+  border: 1px solid rgba(120, 160, 200, 0.22);
+  border-radius: 999px;
+  transition: opacity 0.35s;
+  pointer-events: none;
+}
+.boil-hint.hidden { opacity: 0; }
+
+/* ---------- 中等宽度：面板改为抽屉 ---------- */
+@media (max-width: 1179px) {
+  .boil-area-tabs { top: 92px; }
+  .boil-panel,
+  .boil-detail {
+    top: 0;
+    bottom: 0;
+    display: flex;
+    border-radius: 0 12px 12px 0;
+    z-index: 22;
+    transition: transform 0.22s ease;
+    transform: translateX(-105%);
+  }
+  .boil-page.panel-open .boil-panel { display: flex; transform: none; }
+  .boil-detail {
+    right: 0;
+    left: auto;
+    width: min(92vw, 392px);
+    border-radius: 12px 0 0 12px;
+    transform: translateX(105%);
+  }
+  .boil-page.detail-open .boil-detail { display: flex; transform: none; }
+  .boil-panel { width: min(88vw, 360px); padding-top: 14px; }
+  .boil-panel-close,
+  .boil-detail-close { display: inline-flex; }
+  .boil-legend {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+  }
+  .boil-hint { display: none; }
+}
+
+/* ---------- 窄屏 ---------- */
+@media (max-width: 860px) {
+  .boil-topbar {
+    flex-wrap: wrap;
+    gap: 7px;
+    padding: 8px 10px 12px;
+  }
+  .boil-title h1 { font-size: 15px; }
+  .boil-sub { display: none; }
+  .boil-btn { padding: 5px 8px; font-size: 11.5px; }
+  .boil-controls { gap: 4px; }
+  .boil-area-tabs {
+    top: 94px;
+    left: 10px;
+    right: 10px;
+    transform: none;
+    max-width: none;
+    justify-content: flex-start;
+  }
+  .boil-panel,
+  .boil-detail { width: min(92vw, 380px); }
+  .boil-legend {
+    gap: 6px 8px;
+    padding: 7px 9px;
+    font-size: 10.5px;
+  }
+}
+
+/* 设备观察保留流程场景与当前步骤，模型与控件各占独立区域。 */
+.boil-inspection {
+  width: min(950px, calc(100vw - 22px));
+  height: min(780px, calc(100dvh - 22px));
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  color: #d9e7f3;
+  background: #101b24;
+  border: 1px solid #46647a;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.boil-inspection::backdrop { background: rgba(6, 12, 19, 0.76); }
+.boil-inspection-layout {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  height: 100%;
+}
+.boil-inspection-top, .boil-inspection-modes {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 6px 12px;
+}
+.boil-inspection-top h2 { font-size: 17px; margin: 0; }
+.boil-inspection :is(button, select, summary) { min-height: 44px; }
+.boil-inspection :is(button, select, summary):focus-visible { outline: 2px solid #8fdaff; outline-offset: 2px; }
+.boil-inspection [aria-pressed='true'] { background: #164766; color: #edf9ff; border-color: #69bfeb; }
+.boil-inspection-stage { min-height: 0; overflow: hidden; }
+.boil-inspection-stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.boil-inspection-information { padding: 6px 12px; overflow: auto; max-height: min(26dvh, 140px); }
+.boil-inspection-information select { color: inherit; background: #172f42; }
+.boil-inspection-information p { font-size: 12px; margin: 4px 0; }
+.boil-inspection-information summary { display: flex; align-items: center; cursor: pointer; }
+@media (max-width: 680px) {
+  .boil-inspection { width: calc(100vw - 12px); height: calc(100dvh - 12px); }
+}
+
+.boil-observation-source { color: #99d7fc; text-decoration: underline; }
+.boil-observation-check { display: flex; flex-wrap: wrap; gap: 6px; border: 0; padding: 5px 0; }
+.boil-observation-check legend { padding: 0; font-size: 12px; font-weight: 600; }
+.boil-observation-check [aria-pressed='true'] { border-color: #70c8f0; }
+.boil-observation-check p { flex-basis: 100%; }

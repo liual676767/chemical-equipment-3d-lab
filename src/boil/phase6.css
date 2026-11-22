@@ -1,0 +1,260 @@
+/* Phase 6：工艺追踪、二维流程图与流程播放 */
+
+.boil-badge.sim {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+/* ---------- 小型 PROCESS MAP ---------- */
+.boil-map-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: rgba(6, 14, 23, 0.72);
+  border: 1px solid rgba(120, 160, 200, 0.24);
+  border-radius: 9px;
+}
+.boil-page.map-collapsed .boil-map-card { display: none; }
+.boil-map-head { display: flex; align-items: center; gap: 6px; }
+.boil-map-heading { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.boil-map-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8fd0ff; }
+.boil-map-sub { font-size: 10px; color: #8fa6bc; }
+.boil-map-actions { display: flex; align-items: center; gap: 2px; }
+.boil-map-btn {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1;
+  color: #b9c9da;
+  background: rgba(16, 30, 44, 0.9);
+  border: 1px solid rgba(120, 160, 200, 0.3);
+  border-radius: 5px;
+  cursor: pointer;
+}
+.boil-map-btn:hover { color: #eef8ff; border-color: rgba(56, 189, 248, 0.6); }
+.boil-map-btn.active { color: #eaf8ff; border-color: rgba(56, 189, 248, 0.8); background: rgba(56, 189, 248, 0.18); }
+.boil-map-host {
+  height: 220px;
+  overflow: hidden;
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(56, 189, 248, 0.09), transparent 58%),
+    rgba(4, 11, 18, 0.72);
+  border: 1px solid rgba(120, 160, 200, 0.16);
+}
+.boil-map-svg { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; user-select: none; }
+.boil-map-svg.panning { cursor: grabbing; }
+.boil-map-area { stroke: rgba(143, 208, 255, 0.35); stroke-width: 0.12; opacity: 0.5; }
+.boil-map-area.is-dim { opacity: 0.16; }
+.boil-map-area.is-active { opacity: 0.9; stroke: rgba(125, 211, 252, 0.7); }
+.boil-map-area-label { fill: #9fc7e1; font-weight: 600; pointer-events: none; }
+.boil-map-link { fill: none; stroke-width: 0.3; opacity: 0.6; transition: opacity 0.15s; }
+.boil-map-link.is-order-pending { stroke-dasharray: 0.7 0.55; opacity: 0.95; }
+.boil-map-link.is-dim { opacity: 0.12; }
+.boil-map-link.is-current { stroke: #7dd3fc; stroke-width: 0.48; opacity: 1; }
+.boil-map-link.is-upstream { stroke: #fbbf24; stroke-width: 0.42; opacity: 0.95; }
+.boil-map-link.is-downstream { stroke: #34d399; stroke-width: 0.42; opacity: 0.95; }
+.boil-map-link.is-completed { stroke: #2f9e7a; stroke-width: 0.36; opacity: 0.8; }
+.boil-map-branch { stroke: #d8739a; stroke-width: 0.24; stroke-dasharray: 0.55 0.42; opacity: 0.55; fill: none; }
+.boil-map-branch.is-branch { opacity: 1; stroke-width: 0.38; }
+.boil-map-branch.is-dim { opacity: 0.12; }
+.boil-map-branch-label { fill: #f0a6c0; font-weight: 600; pointer-events: none; }
+.boil-map-node { cursor: pointer; outline: none; }
+.boil-map-node-rect { stroke: rgba(125, 167, 196, 0.75); stroke-width: 0.16; transition: opacity 0.15s, stroke 0.15s; }
+.boil-map-node-label { fill: #dbe7f3; font-weight: 600; pointer-events: none; }
+.boil-map-node:hover .boil-map-node-rect,
+.boil-map-node:focus-visible .boil-map-node-rect { stroke: #7dd3fc; stroke-width: 0.35; }
+.boil-map-node.is-dim { opacity: 0.2; }
+.boil-map-node.is-current .boil-map-node-rect { fill: #0e4a66; stroke: #7dd3fc; stroke-width: 0.4; }
+.boil-map-node.is-current .boil-map-node-label { fill: #f2fbff; }
+.boil-map-node.is-upstream .boil-map-node-rect { fill: #4a330f; stroke: #fbbf24; stroke-width: 0.32; }
+.boil-map-node.is-downstream .boil-map-node-rect { fill: #0e3f2c; stroke: #34d399; stroke-width: 0.32; }
+.boil-map-node.is-branch .boil-map-node-rect { fill: #4a2733; stroke: #d8739a; stroke-width: 0.3; }
+.boil-map-node.is-completed .boil-map-node-rect { fill: #123b31; stroke: #2f9e7a; stroke-width: 0.26; }
+.boil-page.map-expanded .boil-map-card {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(880px, 92vw);
+  z-index: 40;
+  padding: 13px;
+  background: rgba(7, 15, 24, 0.98);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+.boil-page.map-expanded .boil-map-host { height: min(520px, 62vh); }
+
+/* ---------- 追踪历史 ---------- */
+.boil-history { display: flex; flex-direction: column; gap: 4px; padding-top: 8px; border-top: 1px solid rgba(120, 160, 200, 0.16); }
+.boil-history h3 { margin: 0; font-size: 12.5px; color: #dfeaf5; }
+.boil-history-current { margin: 0; font-size: 10.5px; line-height: 1.5; color: #9fb1c4; }
+.boil-history-sub { margin: 3px 0 0; font-size: 10px; color: #8fa6bc; }
+.boil-history-empty { font-size: 10.5px; color: #6f849a; }
+
+/* ---------- 追踪路径 ---------- */
+.boil-path-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 4px;
+  padding: 5px 7px;
+  background: rgba(16, 30, 44, 0.52);
+  border: 1px solid rgba(120, 160, 200, 0.18);
+  border-radius: 7px;
+}
+.boil-path-arrow { color: #7da7c4; font-size: 10px; }
+.boil-path-meta { margin-left: auto; color: #8fa6bc; font-size: 10px; white-space: nowrap; }
+
+/* ---------- 底部 PROCESS CONTROL ---------- */
+.boil-playback {
+  position: absolute;
+  left: 380px;
+  right: 420px;
+  bottom: 12px;
+  z-index: 14;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px 9px;
+  background: rgba(7, 15, 24, 0.94);
+  border: 1px solid rgba(120, 160, 200, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+}
+.boil-playback.completed { border-color: rgba(52, 211, 153, 0.5); }
+.boil-pb-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.boil-pb-fields { display: flex; flex: 1; flex-wrap: wrap; gap: 3px 12px; min-width: 240px; }
+.boil-pb-field { display: inline-flex; align-items: baseline; gap: 4px; font-size: 10.5px; min-width: 0; }
+.boil-pb-label { color: #8fa6bc; white-space: nowrap; }
+.boil-pb-value {
+  color: #e6f4ff;
+  font-weight: 600;
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.boil-pb-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.boil-pb-btn { padding: 4px 9px; font-size: 11.5px; }
+.boil-pb-btn.active { color: #eaf8ff; border-color: rgba(56, 189, 248, 0.8); background: rgba(56, 189, 248, 0.2); }
+.boil-pb-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.boil-pb-speeds { display: flex; align-items: center; gap: 2px; margin-left: 4px; padding-left: 7px; border-left: 1px solid rgba(120, 160, 200, 0.22); }
+.boil-pb-speed { padding: 3px 6px; font-size: 11px; }
+.boil-pb-speed.active { color: #eaf8ff; border-color: rgba(56, 189, 248, 0.75); background: rgba(56, 189, 248, 0.2); }
+.boil-pb-progress-wrap { display: flex; align-items: center; gap: 10px; }
+.boil-pb-progress { position: relative; flex: 1; height: 16px; cursor: pointer; outline: none; }
+.boil-pb-progress::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 6px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(120, 160, 200, 0.18);
+}
+.boil-pb-progress:focus-visible::before { box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.45); }
+.boil-pb-fill {
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 0;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #38bdf8, #34d399);
+  pointer-events: none;
+}
+.boil-pb-knob {
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #eaf8ff;
+  border: 2px solid #38bdf8;
+  transform: translateX(-50%);
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.7);
+}
+.boil-pb-ticks { position: absolute; inset: 0; display: flex; justify-content: space-between; pointer-events: none; }
+.boil-pb-tick { width: 1px; height: 16px; background: rgba(120, 160, 200, 0.22); }
+.boil-pb-tick.done { background: rgba(52, 211, 153, 0.55); }
+.boil-pb-tick.active { background: #7dd3fc; box-shadow: 0 0 5px rgba(125, 211, 252, 0.9); }
+.boil-pb-step-title { max-width: 42%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px; color: #9fb1c4; }
+.boil-pb-note { margin: 0; font-size: 10px; line-height: 1.4; color: #8fa6bc; }
+
+/* 底部控制条占据原图例位置 */
+.boil-legend { bottom: 156px; }
+.boil-hint { bottom: 214px; }
+
+@media (max-width: 1179px) {
+  .boil-playback { left: 10px; right: 10px; bottom: 10px; }
+  .boil-legend { left: 10px; right: 10px; bottom: 168px; }
+  .boil-hint { display: none; }
+}
+
+@media (max-width: 860px) {
+  .boil-playback { padding: 6px 8px 7px; gap: 4px; }
+  .boil-pb-fields { min-width: 0; gap: 2px 8px; }
+  .boil-pb-field:nth-child(1),
+  .boil-pb-field:nth-child(2) { display: none; }
+  .boil-pb-value { max-width: 128px; }
+  .boil-pb-btn { padding: 3px 7px; font-size: 11px; }
+  .boil-pb-speed { padding: 2px 5px; font-size: 10.5px; }
+  .boil-pb-step-title { display: none; }
+  .boil-pb-note { display: none; }
+  .boil-legend { bottom: 158px; font-size: 10.5px; }
+  .boil-map-host { height: 180px; }
+}
+
+/* The scene remains visible until a learner opens a panel. */
+.boil-more { position: relative; }
+.boil-more > summary { list-style: none; }
+.boil-more > summary::-webkit-details-marker { display: none; }
+.boil-more-body {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: min(300px, calc(100vw - 20px));
+  max-height: min(70dvh, 510px);
+  overflow: auto;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  color: #d9e7f3;
+  background: #101e2b;
+  border: 1px solid #46647a;
+  border-radius: 9px;
+}
+.boil-more-body .boil-hint {
+  display: block;
+  position: static;
+  transform: none;
+  width: auto;
+  max-width: none;
+  background: none;
+  border: 0;
+}
+.boil-more-body .boil-legend { position: static; transform: none; width: auto; max-width: none; }
+.boil-more-body .boil-pb-speeds { flex-wrap: wrap; border-left: 0; margin: 0; padding: 0; }
+.boil-more-body .boil-pb-fields { min-width: 0; }
+.boil-more-body .boil-pb-note { display: block; }
+.boil-page :is(.boil-panel, .boil-detail)[hidden] { display: none; }
+.boil-page :is(button, summary, a):focus-visible { outline: 2px solid #87d7ff; outline-offset: 2px; }
+
+@media (max-width: 860px) {
+  .boil-topbar { gap: 4px 8px; padding-bottom: 9px; }
+  .boil-controls { justify-content: space-between; }
+  .boil-topbar .boil-btn, .boil-pb-actions .boil-btn { min-height: 44px; }
+  .boil-panel-close, .boil-detail-close { min-height: 44px; min-width: 44px; }
+  .boil-pb-actions { width: 100%; }
+  .boil-pb-actions .boil-btn { flex: 1; justify-content: center; }
+}

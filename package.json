@@ -1,0 +1,40 @@
+{
+  "name": "chem-equipment-3d-lab",
+  "private": true,
+  "version": "1.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "validate:content": "node scripts/validate-content.mjs",
+    "validate:boil": "node scripts/validate-boil-process.mjs",
+    "validate:boil-internals": "node scripts/validate-boil-internals.mjs",
+    "build": "node scripts/validate-content.mjs && node scripts/validate-boil-internals.mjs && tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "verify": "node scripts/verify.mjs",
+    "verify:pump-template": "node scripts/verify-pump-template.mjs",
+    "thumbs": "node scripts/generate-thumbs.mjs",
+    "verify:boil:areas": "node scripts/verify-boil-areas.mjs",
+    "verify:boil:playback": "node scripts/verify-boil-playback.mjs",
+    "smoke:prod": "node scripts/smoke-prod.mjs",
+    "test:core": "node scripts/test-core-flow.mjs",
+    "verify:catalog": "node scripts/verify-catalog-state.mjs",
+    "verify:pump-exercise": "node scripts/verify-pump-exercise.mjs",
+    "verify:pump-compressors": "node scripts/verify-pump-compressors.mjs",
+    "verify:records": "node scripts/verify-records-compat.mjs",
+    "perf:acceptance": "node scripts/acceptance/perf-acceptance.mjs",
+    "compare:devices": "node scripts/acceptance/device-compare.mjs",
+    "verify:factory": "node scripts/verify-factory.mjs",
+    "verify:factory:stairs": "node scripts/verify-factory-stairs.mjs",
+    "walk:factory:prod": "node scripts/walk-factory-published.mjs"
+  },
+  "dependencies": {
+    "three": "^0.160.1",
+    "three-csg-ts": "3.2.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.160.0",
+    "playwright-core": "^1.65.1",
+    "typescript": "^5.4.5",
+    "vite": "^5.4.11"
+  }
+}
